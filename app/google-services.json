@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "998867124454",
+    "firebase_url": "https://projectremindermob.firebaseio.com",
+    "project_id": "projectremindermob",
+    "storage_bucket": "projectremindermob.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:998867124454:android:c42183f28b507123",
+        "android_client_info": {
+          "package_name": "com.hlub.dev.project_01_reminder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "998867124454-fvc4a3sdhkgqtf11lkl4c52q0ru17pch.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hlub.dev.project_01_reminder",
+            "certificate_hash": "52525b60296567fddec054d539edf342e6ce9002"
+          }
+        },
+        {
+          "client_id": "998867124454-1496v8m98mlku67ssck6191c3sh9o7lp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXLQ8g5x3WiIBPe6sQJWpxeubvjDHjuiI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "998867124454-1496v8m98mlku67ssck6191c3sh9o7lp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

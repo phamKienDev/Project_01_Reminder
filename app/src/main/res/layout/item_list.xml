@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvListName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="20dp"
+            style="@style/TextChildeSettings"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/tvQuantityInList"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tvListName"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="10dp"
+            android:text="abc"
+            android:textColor="@color/colorGray"
+            android:layout_marginBottom="5dp"/>
+
+
+        <ImageView
+            android:id="@+id/imgItemEditList"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="40dp"
+            app:srcCompat="@drawable/edit_24dp" />
+
+        <ImageView
+            android:id="@+id/imgItemDeleteList"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            app:srcCompat="@drawable/ic_action_delete" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorGray"
+            android:layout_below="@id/tvQuantityInList"/>
+    </RelativeLayout>
+
+
+</android.support.v7.widget.CardView>

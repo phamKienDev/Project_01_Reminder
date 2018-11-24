@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:enabled="true"
+        android:icon="@drawable/share_gray_24dp"
+        android:title="@string/title_settings"
+        app:showAsAction="always" />
+
+    <item
+        android:icon="@drawable/more_gray_24dp"
+        android:title="Main menu"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/ic_task_sort"
+                android:icon="@drawable/ic_sort"
+                android:orderInCategory="100"
+                android:title="@string/sort_by_timer"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/ic_task_list"
+                android:icon="@drawable/ic_list"
+                android:orderInCategory="100"
+                android:title="@string/list"
+                app:showAsAction="never" />
+
+            <item
+                android:id="@+id/ic_task_plan"
+                android:icon="@drawable/ic_plan"
+                android:orderInCategory="100"
+                android:title="@string/plan_my_day"
+                app:showAsAction="never" />
+
+        </menu>
+
+
+    </item>
+
+
+</menu>
