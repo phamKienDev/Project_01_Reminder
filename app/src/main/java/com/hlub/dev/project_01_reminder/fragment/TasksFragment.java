@@ -1,22 +1,26 @@
 package com.hlub.dev.project_01_reminder.fragment;
 
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,9 +40,11 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.hlub.dev.project_01_reminder.PlanMyDayActivity;
 import com.hlub.dev.project_01_reminder.TasksListActivity;
 import com.hlub.dev.project_01_reminder.R;
-import com.hlub.dev.project_01_reminder.adapter.TaskAdapter;
+import com.hlub.dev.project_01_reminder.UpdateTasksActivity;
+import com.hlub.dev.project_01_reminder.adapter.ExpandableListViewTasks;
 import com.hlub.dev.project_01_reminder.dao.TasksDAO;
 import com.hlub.dev.project_01_reminder.dao.TasksListDAO;
 import com.hlub.dev.project_01_reminder.database.DatabaseManager;
@@ -46,12 +52,14 @@ import com.hlub.dev.project_01_reminder.model.Tasks;
 import com.hlub.dev.project_01_reminder.model.TasksList;
 import com.hlub.dev.project_01_reminder.broadcast_receiver.AlarmReceiver;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+
+import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
 public class TasksFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
@@ -61,21 +69,27 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
     private EditText edtIWanTo;
     private ImageView imgCalendar;
     private Spinner spinnerList;
+    private ImageView imgEditTasks;
     String ngay, thang, nam, gio, phut;
-    private TextView tvQuantityToday;
-    private TextView tvQuantityTomorrow;
-    private TextView tvQuantityUpcoming;
+    private TextView tvNameTasks;
+    private TextView tvDayTasks;
+    private TextView tvTimeTasks;
+    private TextView tvListTasks;
+    private TextView tvNoteTasks;
+    private TextView tvAdressTasks;
+    public static final String TASKS_ID = "TasksId";
 
+    ExpandableListViewTasks expandableListViewTasks;
+    List<String> listTasksHeader;
+    HashMap<String, List<Tasks>> listDataChild;
 
-    private RecyclerView recycleviewToday;
-    private RecyclerView recycleviewTomorrow;
 
     List<TasksList> tasksListList;
     List<Tasks> tasksToday;
     List<Tasks> tasksTomorrow;
     List<Tasks> tasksUpcoming;
-
-    TaskAdapter taskAdapter;
+    List<Tasks> tasksAll;
+    List<Tasks> tasks;
 
     PendingIntent pendingIntent;
     AlarmManager alarmManager;
@@ -86,12 +100,17 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
     private DatabaseManager databaseManager;
     private TasksDAO tasksDAO;
     private TasksListDAO tasksListDAO;
+    long timeNow;
 
+    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm aa");
+    private String ACTION_NOTIFICATION = "ACTION_NOTIFICATION";
+    private String CHANNEL_ID = "CHANNEL_ID";
+    public static final String KEY = "KEY";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+        ((AppCompatActivity) getActivity()).setSupportActionBar(toobarTasks);
     }
 
     @Nullable
@@ -106,12 +125,17 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         tasksToday = new ArrayList<>();
         tasksTomorrow = new ArrayList<>();
         tasksUpcoming = new ArrayList<>();
+        tasksAll = new ArrayList<>();
+        listTasksHeader = new ArrayList<>();
+        listDataChild = new HashMap<>();
 
+        //DB
         databaseManager = new DatabaseManager(getActivity());
         tasksDAO = new TasksDAO(databaseManager);
         tasksListDAO = new TasksListDAO(databaseManager);
 
         calendar = Calendar.getInstance();
+        timeNow = calendar.getTimeInMillis();//time hiện tại
 
         //ALARMMANAGER
         alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
@@ -119,11 +143,23 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         //toolbar
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         activity.setSupportActionBar(toobarTasks);
-        setHasOptionsMenu(true);
-        toobarTasks.setTitle("ALL TASKS");
 
-        getTasksToday();
-        getTasksTomorrow();
+        setHasOptionsMenu(true);
+        toobarTasks.inflateMenu(R.menu.menu_task);
+
+        //expandable listview
+        addControl();
+
+
+
+        //bat su  kien
+        click_group();
+        click_childer();
+        close_group();
+        open_group();
+
+        //timer
+        //timer();
 
         //floatingbutton
         flButtonTask.setOnClickListener(new View.OnClickListener() {
@@ -135,6 +171,89 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         return view;
     }
 
+    private void addControl() {
+
+//        listDataChild.clear();
+//        listTasksHeader.clear();
+//        tasksToday.clear();
+//        tasksTomorrow.clear();
+//        tasksUpcoming.clear();
+
+        listTasksHeader.add(getString(R.string.today));
+        listTasksHeader.add(getString(R.string.tomorrow));
+        listTasksHeader.add(getString(R.string.upcoming));
+
+        //TO DAY
+        tasksToday = tasksDAO.getTasksToDayTomorrow(calendar.get(Calendar.DAY_OF_MONTH),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.YEAR));
+
+        //TOMORROW ( TODAY+1)
+        calendar.add(Calendar.DATE, 1);
+        tasksTomorrow = tasksDAO.getTasksToDayTomorrow(calendar.get(Calendar.DAY_OF_MONTH),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.YEAR));
+
+        //UPCOMING //cộng thêm 2 ngày ->lấy những tasks sắp tới(trừ today & tomorrow)
+        Calendar upcoming = Calendar.getInstance();
+        upcoming.add(Calendar.DAY_OF_MONTH, 2);
+
+        upcoming.set(Calendar.HOUR_OF_DAY, 0);
+        upcoming.set(Calendar.MINUTE, 0);
+        upcoming.set(Calendar.SECOND, 0);
+        tasksUpcoming = tasksDAO.getTasksUpcoming(upcoming.getTimeInMillis());
+
+        listDataChild.put(listTasksHeader.get(0), tasksToday);
+        listDataChild.put(listTasksHeader.get(1), tasksTomorrow);
+        listDataChild.put(listTasksHeader.get(2), tasksUpcoming);
+
+        expandableListViewTasks = new ExpandableListViewTasks(getActivity(), listTasksHeader, listDataChild);
+        expandableTasks.setAdapter(expandableListViewTasks);
+        expandableListViewTasks.notifyDataSetChanged();
+
+
+    }
+
+    private void open_group() {
+        expandableTasks.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int i) {
+                // Toast.makeText(getActivity(), "open " + listDataHeader.get(i), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void close_group() {
+        expandableTasks.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int groupPosition) {
+                // Toast.makeText(MainActivity.this, "close " + listDataHeader.get(groupPosition), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void click_childer() {
+        expandableTasks.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView expandableListView, View view, int groupPosition, int childerPosition, long l) {
+                long id = listDataChild.get(listTasksHeader.get(groupPosition)).get(childerPosition).getId();
+                showDialogInfoTask(id);
+                return false;
+            }
+        });
+    }
+
+    private void click_group() {
+        expandableTasks.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView expandableListView, View view, int groupPosition, long l) {
+                //Toast.makeText(MainActivity.this, listDataHeader.get(groupPosition), Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
+    }
+
+    //SHOW DIALOG ->CREATE NEW TASKS
     private void showDialogNewTask() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
@@ -162,17 +281,20 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String nameTask = edtIWanTo.getText().toString();//tên nhiệm vụ
-                Calendar now = Calendar.getInstance();
-                long timeNow = now.getTimeInMillis();//thời gian hiện tại
                 long timer = calendar.getTimeInMillis();//thời điểm đặt báo thức
                 // k đc phép đặt thời điểm nhiệm vụ đã kết thúc
-                if (timer < timeNow) {
+                if (timer <= timeNow) {
                     Toast.makeText(getActivity(), getString(R.string.The_time_you_selected_has_ended), Toast.LENGTH_SHORT).show();
                 } else {
                     Tasks tasks = new Tasks(nameTask, timer, tasksList.getId(), "", "", timeNow, 0);
                     tasksDAO.insertTasks(tasks);
-                    getTasksToday();
-                    getTasksTomorrow();
+                    addControl();
+                    expandableTasks.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+                        @Override
+                        public void onGroupExpand(int i) {
+                            // Toast.makeText(getActivity(), "open " + listDataHeader.get(i), Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
                 }
 
@@ -188,33 +310,146 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         builder.show();
     }
 
-    public void timer(List<Tasks> tasklist) {
-        for (Tasks task : tasklist) {
-            Intent intent = new Intent(getActivity(), AlarmReceiver.class);
-            //HẸN GIỜ
-            intent.putExtra("extra", "on");
-            //vẫn tồn tại khi thoát ứng dụng
-            pendingIntent = PendingIntent.getBroadcast(
-                    getActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    //SHOW DIALOG INFO TASKS
+    private void showDialogInfoTask(final long id) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-            alarmManager.set(AlarmManager.RTC_WAKEUP, task.getTime(), pendingIntent);
+        //view
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.dialog_info_tasks, null);
+        imgEditTasks = view.findViewById(R.id.imgEditTasks);
+        tvNameTasks = view.findViewById(R.id.tvNameTasks);
+        tvDayTasks = view.findViewById(R.id.tvDayTasks);
+        tvTimeTasks = view.findViewById(R.id.tvTimeTasks);
+        tvListTasks = view.findViewById(R.id.tvListTasks);
+        tvNoteTasks = view.findViewById(R.id.tvNoteTasks);
+        tvAdressTasks = view.findViewById(R.id.tvAdressTasks);
+        builder.setView(view);
+
+
+        SimpleDateFormat day = new SimpleDateFormat("dd-MM-yyyy");
+        SimpleDateFormat time = new SimpleDateFormat("HH:mm aa");
+        //Sét text
+        final Tasks tasks = tasksDAO.getTasksByID(id);
+        tvNameTasks.setText(tasks.getNameTask());
+        tvDayTasks.setText(day.format(tasks.getTime()));
+        tvTimeTasks.setText(time.format(tasks.getTime()));
+
+        //list
+        TasksList tl = tasksListDAO.getTasksListByID(tasks.getTaskListId());
+        tvListTasks.setText(tl.getName());
+        //address
+        if (tasks.getAddress().length() > 0) {
+            setTextForEdt(tvAdressTasks, tasks.getAddress());
+        } else {
+            setTextForEdtNull(tvAdressTasks, getString(R.string.no_address));
+        }
+
+        //note
+        if (tasks.getNote().length() > 0) {
+            setTextForEdt(tvNoteTasks, tasks.getNote());
+        } else {
+            setTextForEdtNull(tvNoteTasks, getString(R.string.no_note));
+        }
+        Toast.makeText(getActivity(), "" + tasks.getId(), Toast.LENGTH_SHORT).show();
+
+        //Chuyển màn hình EDIT TASKS
+        imgEditTasks.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), UpdateTasksActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("TasksId", String.valueOf(tasks.getId()));
+                intent.putExtra("bundle", bundle);
+                startActivity(intent);
+            }
+        });
+
+        builder.show();
+    }
+
+    public void setTextForEdt(TextView tv, String text) {
+        tv.setText(text);
+        tv.setTextColor(ContextCompat.getColor(getActivity(), R.color.colorBlack));
+    }
+
+    public void setTextForEdtNull(TextView tv, String text) {
+        tv.setText(text);
+        tv.setTextColor(ContextCompat.getColor(getActivity(), R.color.colorGray));
+    }
+
+
+    public void timer() {
+        tasksAll = tasksDAO.getAllTasks();
+        for (Tasks task : tasksAll) {
+            if (task.getTime() > timeNow) {
+                Intent intent = new Intent(getActivity(), AlarmReceiver.class);
+                //HẸN GIỜ
+                intent.putExtra(KEY, "On");
+                //vẫn tồn tại khi thoát ứng dụng
+                pendingIntent = PendingIntent.getBroadcast(
+                        getActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                notification(pendingIntent);
+                alarmManager.set(AlarmManager.RTC_WAKEUP, task.getTime(), pendingIntent);
+            }
+
         }
 
     }
 
+    //NOTIFICATION
+    public void notification(PendingIntent pendingIntent) {
+        Intent snoozeIntent = new Intent(getActivity(), AlarmReceiver.class);
+        snoozeIntent.setAction(ACTION_NOTIFICATION);
+        snoozeIntent.putExtra(KEY, "Off");
 
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getActivity(), CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentTitle("My notification")
+                .setContentText("Hello World!")
+                .setContentIntent(pendingIntent)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(""))
+                .addAction(R.drawable.ic_launcher_background, getString(R.string.start),
+                        pendingIntent);
+        createNotificationChannel();
+        //hiển thị thông báo
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getActivity());
+
+        // hide the notification after its selected
+        mBuilder.build().flags |= Notification.FLAG_AUTO_CANCEL;
+        notificationManager.notify(0, mBuilder.build());
+
+
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getActivity().getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    //SHOW DATE & TIME DIALOGPICKER
     public void showDatePickerDialog() {
-
-        //SET THỜI GIAN CALENDAR
-
-        final int day = calendar.get(Calendar.DATE);
+        final int day = calendar.get(Calendar.DAY_OF_MONTH) - 1;
         final int month = calendar.get(Calendar.MONTH);
         final int year = calendar.get(Calendar.YEAR);
+
         final DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(), new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(final DatePicker datePicker, int i, int i1, int i2) {
-                final SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-                int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+                int hour = calendar.get(Calendar.HOUR_OF_DAY) + 1;
                 int minute = calendar.get(Calendar.MINUTE);
 
                 final TimePickerDialog timePickerDialog = new TimePickerDialog(getActivity(), new TimePickerDialog.OnTimeSetListener() {
@@ -226,22 +461,6 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
                         calendar.set(Calendar.YEAR, datePicker.getYear());
                         calendar.set(Calendar.HOUR_OF_DAY, view.getCurrentHour());
                         calendar.set(Calendar.MINUTE, view.getCurrentMinute());
-
-                        int hh = view.getCurrentHour();
-                        int mm = view.getCurrentMinute();
-
-                        gio = String.valueOf(hh);
-                        phut = String.valueOf(mm);
-
-                        if (hh > 12) {
-                            gio = String.valueOf(hh - 12);
-                        }
-                        if (mm < 10) {
-                            phut = "0" + phut;
-                        }
-
-                        Toast.makeText(getActivity(), "Đặt " + gio + " : " + phut, Toast.LENGTH_SHORT).show();
-                        Toast.makeText(getActivity(), sdf.format(calendar.getTime()).toString() + "...", Toast.LENGTH_SHORT).show();
 
                     }
                 }, hour, minute, true);
@@ -255,34 +474,17 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
 
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        menu.clear();
-        inflater.inflate(R.menu.menu_task, menu);
-        super.onCreateOptionsMenu(menu, inflater);
+
+    //LOAD TASKSLIST CHO SPINNER
+    public ArrayAdapter<TasksList> loadSpinner() {
+        tasksListList = tasksListDAO.getAllTasksList();
+        ArrayAdapter<TasksList> adapter = new ArrayAdapter(getActivity(),
+                android.R.layout.simple_spinner_item, tasksListList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        switch (id) {
-            case R.id.ic_task_sort:
-
-                return false;
-            case R.id.ic_task_list:
-                Intent intent = new Intent(getActivity(), TasksListActivity.class);
-                getActivity().startActivity(intent);
-                return true;
-            case R.id.ic_task_plan:
-
-                return true;
-            default:
-                break;
-
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
+    //CLICK SPINNER
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         tasksList = (TasksList) parent.getItemAtPosition(position);
@@ -294,63 +496,63 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
 
     }
 
-    public ArrayAdapter<TasksList> loadSpinner() {
+
+    //MENU
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_task, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.ic_task_sort:
+                sortTasksByList();
+                return false;
+            case R.id.ic_task_list:
+                Intent intent = new Intent(getActivity(), TasksListActivity.class);
+                getActivity().startActivity(intent);
+                return true;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    //SẮP XẾP TASKS THEO LIST
+    private void sortTasksByList() {
+        listTasksHeader.clear();
+        listDataChild.clear();
+        List<Tasks> tasksByList = new ArrayList<>();
         tasksListList = tasksListDAO.getAllTasksList();
-        ArrayAdapter<TasksList> adapter = new ArrayAdapter(getActivity(),
-                android.R.layout.simple_spinner_item, tasksListList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        return adapter;
+        for (TasksList tl : tasksListList) {
+
+            tasks = tasksDAO.getAllTasksByListId(tl.getId());
+            for (Tasks t : tasks) {
+                tasksByList.add(t);
+                Log.d("t.size", tasksByList.size() + "");
+
+            }
+            listTasksHeader.add(tl.getName());
+            listDataChild.put(tl.getName(), tasksByList);
+            Log.d("listDataChild.size", listDataChild.size() + "");
+            tasksByList.clear();
+            Log.d("t.size2", tasksByList.size() + "");
+
+        }
+
+
+        expandableListViewTasks = new ExpandableListViewTasks(getActivity(), listTasksHeader, listDataChild);
+        expandableTasks.setAdapter(expandableListViewTasks);
     }
 
-    //TODAY
-    public void getTasksToday() {
-        int dayToday = calendar.get(Calendar.DATE);
-        int monthToday = calendar.get(Calendar.MONTH) + 1;
-        int yearToday = calendar.get(Calendar.YEAR);
-
-        tasksToday = tasksDAO.getTasksToDayTomorrow(dayToday, monthToday, yearToday);
-        Log.d("today", tasksToday.size() + "");
-        tvQuantityToday.setText(String.valueOf(tasksToday.size()));
-        Toast.makeText(getActivity(), dayToday + "/ " + monthToday + "/" + yearToday, Toast.LENGTH_LONG).show();
-
-        //recycleview
-        taskAdapter = new TaskAdapter(getActivity(), tasksToday);
-        RecyclerView.LayoutManager manager = new LinearLayoutManager(getActivity());
-        recycleviewToday.setLayoutManager(manager);
-        recycleviewToday.setAdapter(taskAdapter);
-        taskAdapter.notifyDataSetChanged();
-    }
-
-    //TOMORROW
-    public void getTasksTomorrow() {
-        //TOMORROW
-        calendar.add(Calendar.DATE, 1);
-        int dayTomorrow = calendar.get(Calendar.DATE);
-        int monthTomorrow = calendar.get(Calendar.MONTH) + 1;
-        int yearTomorrow = calendar.get(Calendar.YEAR);
-        Toast.makeText(getActivity(), dayTomorrow + "/ " + monthTomorrow + "/" + yearTomorrow, Toast.LENGTH_LONG).show();
-
-        tasksTomorrow = tasksDAO.getTasksToDayTomorrow(dayTomorrow, monthTomorrow, yearTomorrow);
-        tvQuantityTomorrow.setText(String.valueOf(tasksTomorrow.size()));
-        Log.d("today", tasksTomorrow.size() + "");
-
-        //recycleview
-        taskAdapter = new TaskAdapter(getActivity(), tasksTomorrow);
-        RecyclerView.LayoutManager manager = new LinearLayoutManager(getActivity());
-        recycleviewTomorrow.setLayoutManager(manager);
-        recycleviewTomorrow.setAdapter(taskAdapter);
-        taskAdapter.notifyDataSetChanged();
-    }
-
-
+    //ANH XA
     public void anhxa(View view) {
         toobarTasks = view.findViewById(R.id.toobarTasks);
         flButtonTask = view.findViewById(R.id.flButtonTask);
-        recycleviewToday = view.findViewById(R.id.recycleviewToday);
-        recycleviewTomorrow = view.findViewById(R.id.recycleviewTomorrow);
-        tvQuantityToday = view.findViewById(R.id.tvQuantityToday);
-        tvQuantityTomorrow = view.findViewById(R.id.tvQuantityTomorrow);
-        tvQuantityUpcoming = view.findViewById(R.id.tvQuantityUpcoming);
+        expandableTasks = view.findViewById(R.id.expandableListviewTasks);
 
     }
 

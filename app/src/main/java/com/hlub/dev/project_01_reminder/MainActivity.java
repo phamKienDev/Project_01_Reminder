@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
         if (savedInstanceState == null) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_task);
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,new TasksFragment()).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new TasksFragment()).commit();
         }
 
     }

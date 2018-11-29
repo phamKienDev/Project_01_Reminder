@@ -30,9 +30,16 @@
             android:value="@string/facebook_app_id" />
 
         <receiver android:name=".broadcast_receiver.AlarmReceiver" />
+
         <service
             android:name=".service.AlarmService"
             android:enabled="true" />
+
+        <activity
+            android:name=".UpdateTasksActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme" />
+        <activity android:name=".PlanMyDayActivity"></activity>
     </application>
 
 </manifest>

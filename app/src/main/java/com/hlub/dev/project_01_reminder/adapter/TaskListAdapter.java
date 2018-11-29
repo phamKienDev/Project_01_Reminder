@@ -10,6 +10,9 @@ import android.widget.TextView;
 
 import com.hlub.dev.project_01_reminder.TasksListActivity;
 import com.hlub.dev.project_01_reminder.R;
+import com.hlub.dev.project_01_reminder.dao.TasksDAO;
+import com.hlub.dev.project_01_reminder.database.DatabaseManager;
+import com.hlub.dev.project_01_reminder.model.Tasks;
 import com.hlub.dev.project_01_reminder.model.TasksList;
 
 import java.util.List;
@@ -17,10 +20,14 @@ import java.util.List;
 public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.ListHolder> {
     List<TasksList> list;
     TasksListActivity listActivity;
+    DatabaseManager databaseManager;
+    TasksDAO tasksDAO;
 
     public TaskListAdapter(List<TasksList> list, TasksListActivity listActivity) {
         this.list = list;
         this.listActivity = listActivity;
+        databaseManager = new DatabaseManager(listActivity);
+        tasksDAO = new TasksDAO(databaseManager);
     }
 
 
@@ -33,21 +40,23 @@ public class TaskListAdapter extends RecyclerView.Adapter<TaskListAdapter.ListHo
 
     @Override
     public void onBindViewHolder(@NonNull ListHolder holder, final int position) {
-        final TasksList taskList=list.get(position);
+        final TasksList taskList = list.get(position);
+        List<Tasks> tasks = tasksDAO.getAllTasksByListId(taskList.getId());
+
         holder.tvListName.setText(taskList.getName());
         holder.imgItemEditList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                listActivity.showDialogUpdateList(taskList.getName().toString(),position);
+                listActivity.showDialogUpdateList(taskList.getName().toString(), position);
             }
         });
+        holder.tvQuantityInList.setText(String.valueOf(tasks.size()) + " tasks");
         holder.imgItemDeleteList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 listActivity.showDialogDeleteList(position);
             }
         });
-
 
 
     }

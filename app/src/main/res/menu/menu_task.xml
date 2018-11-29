@@ -4,12 +4,6 @@
 
 
     <item
-        android:enabled="true"
-        android:icon="@drawable/share_gray_24dp"
-        android:title="@string/title_settings"
-        app:showAsAction="always" />
-
-    <item
         android:icon="@drawable/more_gray_24dp"
         android:title="Main menu"
         app:showAsAction="always">
@@ -27,12 +21,6 @@
                 android:title="@string/list"
                 app:showAsAction="never" />
 
-            <item
-                android:id="@+id/ic_task_plan"
-                android:icon="@drawable/ic_plan"
-                android:orderInCategory="100"
-                android:title="@string/plan_my_day"
-                app:showAsAction="never" />
 
         </menu>
 

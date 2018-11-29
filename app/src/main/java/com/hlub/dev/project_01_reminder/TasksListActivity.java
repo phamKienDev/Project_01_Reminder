@@ -15,8 +15,10 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.hlub.dev.project_01_reminder.adapter.TaskListAdapter;
+import com.hlub.dev.project_01_reminder.dao.TasksDAO;
 import com.hlub.dev.project_01_reminder.dao.TasksListDAO;
 import com.hlub.dev.project_01_reminder.database.DatabaseManager;
+import com.hlub.dev.project_01_reminder.model.Tasks;
 import com.hlub.dev.project_01_reminder.model.TasksList;
 
 import java.util.ArrayList;
@@ -30,8 +32,10 @@ public class TasksListActivity extends AppCompatActivity {
     private EditText edtUpdateListName;
     private TaskListAdapter tasksListAdapter;
     List<TasksList> tasksLists;
+    List<Tasks> tasks;
 
     private TasksListDAO tasksListDAO;
+    private TasksDAO tasksDAO;
     private DatabaseManager databaseManager;
 
 
@@ -49,8 +53,10 @@ public class TasksListActivity extends AppCompatActivity {
 
         databaseManager = new DatabaseManager(this);
         tasksListDAO = new TasksListDAO(databaseManager);
+        tasksDAO = new TasksDAO(databaseManager);
 
         tasksLists = new ArrayList<>();
+        tasks = new ArrayList<>();
 
         getAllTasksList();
 
@@ -97,7 +103,7 @@ public class TasksListActivity extends AppCompatActivity {
                 if (name.length() == 0) {
                     edtNewListName.setError(getString(R.string.must_not_be_empty));
                     Toast.makeText(TasksListActivity.this, getString(R.string.must_not_be_empty), Toast.LENGTH_SHORT).show();
-                }else{
+                } else {
                     Calendar calendar = Calendar.getInstance();
                     TasksList tasksList = new TasksList(calendar.getTimeInMillis(), name);
                     createTasksList(tasksList);
@@ -122,7 +128,7 @@ public class TasksListActivity extends AppCompatActivity {
                 dialog.dismiss();
             }
         });
-        builder.setPositiveButton(getString(R.string.delte), new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getString(R.string.delete), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 deleteTasksList(position);
@@ -152,11 +158,11 @@ public class TasksListActivity extends AppCompatActivity {
         builder.setPositiveButton(getString(R.string.update), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-               if(edtUpdateListName.getText().toString().length()==0){
-                   Toast.makeText(TasksListActivity.this, getString(R.string.must_not_be_empty), Toast.LENGTH_SHORT).show();
-               }else {
-                   updateTasksList(edtUpdateListName.getText().toString(), position);
-               }
+                if (edtUpdateListName.getText().toString().length() == 0) {
+                    Toast.makeText(TasksListActivity.this, getString(R.string.must_not_be_empty), Toast.LENGTH_SHORT).show();
+                } else {
+                    updateTasksList(edtUpdateListName.getText().toString(), position);
+                }
             }
         });
         builder.show();
@@ -172,14 +178,44 @@ public class TasksListActivity extends AppCompatActivity {
 
     }
 
-    public void deleteTasksList(int position) {
-        TasksList tl = tasksLists.get(position);
+    public void deleteTasksList(final int position) {
+        final TasksList tl = tasksLists.get(position);
 
-        //delete DB
-        tasksListDAO.deleteTasksList(tl);
+        final List<Tasks> tasks = tasksDAO.getAllTasksByListId(tl.getId());
 
-        tasksLists.remove(position);
-        tasksListAdapter.notifyItemRemoved(position);
+        if (tasks.size() > 0) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(getString(R.string.delete_list));
+            builder.setMessage("Do you want to delete " + tasks.size() + " tasks");
+
+            builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            builder.setPositiveButton(getString(R.string.delete), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    for (Tasks t : tasks) {
+                        tasksDAO.deleteTasks(t);
+                    }
+                    tasksListDAO.deleteTasksList(tl);
+                    Toast.makeText(TasksListActivity.this, getString(R.string.deleted_data), Toast.LENGTH_SHORT).show();
+                    tasksLists.remove(position);
+                    tasksListAdapter.notifyItemRemoved(position);
+
+                }
+            });
+            builder.show();
+        } else {
+            //delete DB
+            tasksListDAO.deleteTasksList(tl);
+            Toast.makeText(TasksListActivity.this, getString(R.string.deleted_data), Toast.LENGTH_SHORT).show();
+            tasksLists.remove(position);
+            tasksListAdapter.notifyItemRemoved(position);
+        }
+
     }
 
     public void updateTasksList(String name, int position) {

@@ -64,7 +64,7 @@
     </style>
 
     <style name="TextChildeSettings">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">17sp</item>
         <item name="android:fontFamily">Roboto</item>
         <item name="android:textColor">@color/colorBlack</item>
         <item name="android:layout_marginLeft">10dp</item>
@@ -79,6 +79,26 @@
         <item name="android:textSize">18sp</item>
         <item name="android:fontFamily">Ancuu</item>
         <item name="android:textColor">@color/colorText</item>
+    </style>
+
+    <!--TEXT TITLE TASKS-->
+    <style name="TitleTasks">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">Roboto</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+
+    <style name="TextTimeTasks">
+        <item name="android:textSize">8sp</item>
+        <item name="android:fontFamily">Roboto</item>
+        <item name="android:textColor">@color/colorTextGray</item>
+        <item name="android:padding">3dp</item>
+    </style>
+
+    <!--TEXT INFO TASKS-->
+    <style name="TextInfoTasks">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/colorBlack</item>
     </style>
 
 

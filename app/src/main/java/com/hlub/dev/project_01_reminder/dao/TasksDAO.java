@@ -62,6 +62,29 @@ public class TasksDAO implements Constant {
         return tasksList;
     }
 
+    //GET ALL TASKS
+    public List<Tasks> getAllTasksByListId(long listId) {
+        List<Tasks> tasksList = new ArrayList<>();
+        String select = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COLUMN_LIST_ID + " ='" + listId + "'";
+        Cursor cursor = sqLiteDatabase.rawQuery(select, null);
+        if (cursor.moveToFirst()) {
+            do {
+                Tasks tasks = new Tasks();
+                tasks.setId(cursor.getInt(cursor.getColumnIndex(COLUMN_TASKS_ID)));
+                tasks.setNameTask(cursor.getString(cursor.getColumnIndex(COLUMN_TASKS_NAME)));
+                tasks.setTime(cursor.getLong(cursor.getColumnIndex(COLUMN_TASKS_TIME)));
+                tasks.setTaskListId(cursor.getLong(cursor.getColumnIndex(COLUMN_LIST_ID)));
+                tasks.setNote(cursor.getString(cursor.getColumnIndex(COLUMN_TASKS_NOTE)));
+                tasks.setAddress(cursor.getString(cursor.getColumnIndex(COLUMN_TASKS_ADDRESS)));
+                tasks.setTimeCreate(cursor.getLong(cursor.getColumnIndex(COLUMN_TASKS_TIME_CREATE)));
+                tasks.setFinish(cursor.getInt(cursor.getColumnIndex(COLUMN_TASKS_FINISH)));
+
+                tasksList.add(tasks);
+            } while (cursor.moveToNext());
+        }
+        return tasksList;
+    }
+
     public Tasks getTasksByID(long tasksId) {
         Tasks tasks = null;
 
@@ -106,12 +129,39 @@ public class TasksDAO implements Constant {
     }
 
     //GET TASKS BY TODAY, TOMORROW
-    public List<Tasks> getTasksToDayTomorrow(int day,int month,int year) {
+    public List<Tasks> getTasksToDayTomorrow(int day, int month, int year) {
         List<Tasks> tasksList = new ArrayList<>();
         String sql = "SELECT * FROM " + TABLE_TASKS + " WHERE strftime('%d',Tasks.time/1000,'unixepoch')='" + day + "'" +
-                " AND strftime('%m',Tasks.time/1000,'unixepoch')='"+month+"' AND strftime('%Y',Tasks.time/1000,'unixepoch')='"+year+"'";
+                " AND strftime('%m',Tasks.time/1000,'unixepoch')='" + month + "' AND strftime('%Y',Tasks.time/1000,'unixepoch')='" + year + "'";
         Cursor cursor = sqLiteDatabase.rawQuery(sql, null);
         Log.d("Today", sql);
+        if (cursor.moveToFirst()) {
+            do {
+                Tasks tasks = new Tasks();
+                tasks.setId(cursor.getInt(cursor.getColumnIndex(COLUMN_TASKS_ID)));
+                tasks.setNameTask(cursor.getString(cursor.getColumnIndex(COLUMN_TASKS_NAME)));
+                tasks.setTime(cursor.getLong(cursor.getColumnIndex(COLUMN_TASKS_TIME)));
+                tasks.setTaskListId(cursor.getLong(cursor.getColumnIndex(COLUMN_LIST_ID)));
+                tasks.setNote(cursor.getString(cursor.getColumnIndex(COLUMN_TASKS_NOTE)));
+                tasks.setAddress(cursor.getString(cursor.getColumnIndex(COLUMN_TASKS_ADDRESS)));
+                tasks.setTimeCreate(cursor.getLong(cursor.getColumnIndex(COLUMN_TASKS_TIME_CREATE)));
+                tasks.setFinish(cursor.getInt(cursor.getColumnIndex(COLUMN_TASKS_FINISH)));
+
+                tasksList.add(tasks);
+            } while (cursor.moveToNext());
+        }
+        return tasksList;
+    }
+
+    public List<Tasks> getTasksUpcoming(long time) {
+        List<Tasks> tasksList = new ArrayList<>();
+//        String sql1 = "SELECT * FROM " + TABLE_TASKS + " WHERE strftime('%d',Tasks.time/1000,'unixepoch') <'" + day + "'" +
+//                " AND strftime('%m',Tasks.time/1000,'unixepoch')='" + month + "' AND strftime('%Y',Tasks.time/1000,'unixepoch')='" + year + "'";
+        String sql = "SELECT * FROM " + TABLE_TASKS + " WHERE Tasks.time >'" + time + "'";
+
+
+        Cursor cursor = sqLiteDatabase.rawQuery(sql, null);
+        Log.d("Upcoming", sql);
         if (cursor.moveToFirst()) {
             do {
                 Tasks tasks = new Tasks();

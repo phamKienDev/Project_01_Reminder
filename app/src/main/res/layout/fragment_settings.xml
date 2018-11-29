@@ -29,6 +29,7 @@
         style="@style/TextChildeSettings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
         android:text="@string/bell_sound" />
 
     <LinearLayout
@@ -38,40 +39,31 @@
         android:padding="5dp">
 
         <Spinner
-            style="@style/Widget.AppCompat.Spinner.Underlined"
+            android:id="@+id/spinnerBellSound"
             android:layout_width="0dp"
             android:layout_height="30dp"
-            android:layout_weight="1"></Spinner>
+            android:layout_weight="1"
+            android:background="@drawable/spinner_border_bottom"></Spinner>
+
+
+        <!--<Spinner-->
+            <!--android:id="@+id/spinnerBellSound"-->
+            <!--style="@style/Base.Widget.AppCompat.Spinner.Underlined"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="30dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:backgroundTint="@color/colorAccent"-->
+            <!--android:backgroundTintMode="src_in"-->
+            <!--android:spinnerMode="dropdown"></Spinner>-->
+
 
         <ImageView
+            android:id="@+id/imgPlayBellSound"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_play" />
     </LinearLayout>
 
-    <TextView
-        style="@style/TextChildeSettings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/tick_mark" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="5dp">
-
-        <Spinner
-            style="@style/Widget.AppCompat.Spinner.Underlined"
-            android:layout_width="0dp"
-            android:layout_height="30dp"
-            android:layout_weight="1"></Spinner>
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_play" />
-    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

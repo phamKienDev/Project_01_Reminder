@@ -19,149 +19,18 @@
             android:text="@string/all_tasks" />
     </android.support.v7.widget.Toolbar>
 
-    <RelativeLayout
-        android:id="@+id/linerlayoutToday"
+
+    <ExpandableListView
+        android:id="@+id/expandableListviewTasks"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/toobarTasks"
-        android:layout_centerVertical="true">
+        android:childDivider="@android:color/transparent"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="2dp"
+        android:groupIndicator="@android:color/transparent">
 
-        <TextView
-            android:id="@+id/tvTaskHeaderToday"
-            style="@style/TitleGroupTask"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_marginLeft="16dp"
-            android:text="@string/today" />
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="10dp">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                app:srcCompat="@drawable/cicle_36dp" />
-
-            <TextView
-                android:id="@+id/tvQuantityToday"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:text="abc"
-                android:textColor="@color/colorText"
-                android:textSize="15sp" />
-        </FrameLayout>
-    </RelativeLayout>
-
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycleviewToday"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linerlayoutToday">
-
-    </android.support.v7.widget.RecyclerView>
-
-
-    <RelativeLayout
-        android:id="@+id/linerlayoutTomorrow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/recycleviewToday"
-        android:layout_centerVertical="true">
-
-        <TextView
-            android:id="@+id/tvTaskHeaderTomorrow"
-            style="@style/TitleGroupTask"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_marginLeft="16dp"
-            android:text="@string/tomorrow" />
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="10dp">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                app:srcCompat="@drawable/cicle_36dp" />
-
-            <TextView
-                android:id="@+id/tvQuantityTomorrow"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:text="abc"
-                android:textColor="@color/colorText"
-                android:textSize="15sp" />
-        </FrameLayout>
-    </RelativeLayout>
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycleviewTomorrow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linerlayoutTomorrow">
-
-    </android.support.v7.widget.RecyclerView>
-
-    <RelativeLayout
-        android:id="@+id/linerlayoutUpcoming"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/recycleviewTomorrow"
-        android:layout_centerVertical="true">
-
-        <TextView
-            android:id="@+id/tvTaskHeaderUpcoming"
-            style="@style/TitleGroupTask"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_marginLeft="16dp"
-            android:text="@string/upcoming" />
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="10dp">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                app:srcCompat="@drawable/cicle_36dp" />
-
-            <TextView
-                android:id="@+id/tvQuantityUpcoming"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:text="abc"
-                android:textColor="@color/colorText"
-                android:textSize="15sp" />
-        </FrameLayout>
-    </RelativeLayout>
-
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycleviewUpcoming"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linerlayoutUpcoming">
-
-    </android.support.v7.widget.RecyclerView>
+    </ExpandableListView>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/flButtonTask"

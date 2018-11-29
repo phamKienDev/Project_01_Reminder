@@ -23,7 +23,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskHolder> {
     private List<Tasks> tasks;
     private TasksDAO tasksDAO;
     private DatabaseManager databaseManager;
-    SimpleDateFormat sdf = new SimpleDateFormat(" hh:mm aa");
+    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss ");
 
     public TaskAdapter(Context context, List<Tasks> tasks) {
         this.context = context;
