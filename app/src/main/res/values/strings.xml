@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Project_01_Reminder</string>
+    <string name="app_name">Reminder</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="signin">SIGN IN</string>
@@ -32,7 +32,6 @@
     <string name="list_name">List name</string>
     <string name="ok">OK</string>
     <string name="new_listing">New listing</string>
-    <string name="facebook_app_id">745232812505590</string>
     <string name="create_account_with_email">Create account with email</string>
     <string name="create_account">Create account</string>
     <string name="required">Required</string>
@@ -70,4 +69,8 @@
     <string name="start">Start</string>
     <string name="channel_name">chanel_name</string>
     <string name="channel_description">channel_description</string>
+    <string name="action_filt_list">Find list</string>
+    <string name="SHARE">SHARE</string>
+    <string name="thoat_ung_dung">Thoát ứng dụng ?</string>
+    <string name="facebook_app_id">307360329876672</string>
 </resources>

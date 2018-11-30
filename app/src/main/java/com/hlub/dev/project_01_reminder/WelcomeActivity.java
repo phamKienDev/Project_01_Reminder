@@ -16,7 +16,16 @@ public class WelcomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
 
-        timer = new CountDownTimer(2000, 1000) {
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        countTimer();
+    }
+
+    public void countTimer(){
+        timer = new CountDownTimer(1500, 100) {
             @Override
             public void onTick(long millisUntilFinished) {
                 Log.d("abc", millisUntilFinished + "");
@@ -28,7 +37,5 @@ public class WelcomeActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         }.start();
-
     }
-
 }

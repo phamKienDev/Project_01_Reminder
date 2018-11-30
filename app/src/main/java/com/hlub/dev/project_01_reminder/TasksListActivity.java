@@ -10,8 +10,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.support.v7.widget.SearchView;
 import android.widget.Toast;
 
 import com.hlub.dev.project_01_reminder.adapter.TaskListAdapter;
@@ -65,7 +67,23 @@ public class TasksListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_list, menu);
-        return super.onCreateOptionsMenu(menu);
+
+        MenuItem searchItem=menu.findItem(R.id.ic_list_find);
+        SearchView searchView= (SearchView) searchItem.getActionView();
+        searchView.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                tasksListAdapter.getFilter().filter(newText);
+                return false;
+            }
+        });
+        return true;
     }
 
     @Override
@@ -73,8 +91,6 @@ public class TasksListActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.ic_list_add:
                 showDialogNewList();
-                break;
-            case R.id.ic_list_find:
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -174,7 +190,7 @@ public class TasksListActivity extends AppCompatActivity {
         RecyclerView.LayoutManager manager = new LinearLayoutManager(this);
         recycleviewList.setLayoutManager(manager);
         recycleviewList.setAdapter(tasksListAdapter);
-        tasksListAdapter.notifyDataSetChanged();
+        //tasksListAdapter.notifyDataSetChanged();
 
     }
 

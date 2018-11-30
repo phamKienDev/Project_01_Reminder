@@ -10,6 +10,7 @@ import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -40,7 +41,6 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.hlub.dev.project_01_reminder.PlanMyDayActivity;
 import com.hlub.dev.project_01_reminder.TasksListActivity;
 import com.hlub.dev.project_01_reminder.R;
 import com.hlub.dev.project_01_reminder.UpdateTasksActivity;
@@ -48,18 +48,16 @@ import com.hlub.dev.project_01_reminder.adapter.ExpandableListViewTasks;
 import com.hlub.dev.project_01_reminder.dao.TasksDAO;
 import com.hlub.dev.project_01_reminder.dao.TasksListDAO;
 import com.hlub.dev.project_01_reminder.database.DatabaseManager;
+import com.hlub.dev.project_01_reminder.helper.DateFormatHelper;
 import com.hlub.dev.project_01_reminder.model.Tasks;
 import com.hlub.dev.project_01_reminder.model.TasksList;
 import com.hlub.dev.project_01_reminder.broadcast_receiver.AlarmReceiver;
 
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-
-import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
 public class TasksFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
@@ -70,14 +68,14 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
     private ImageView imgCalendar;
     private Spinner spinnerList;
     private ImageView imgEditTasks;
-    String ngay, thang, nam, gio, phut;
+    private ImageView imgShareTasks;
     private TextView tvNameTasks;
     private TextView tvDayTasks;
     private TextView tvTimeTasks;
     private TextView tvListTasks;
     private TextView tvNoteTasks;
     private TextView tvAdressTasks;
-    public static final String TASKS_ID = "TasksId";
+    private DateFormatHelper dateFormatHelper;
 
     ExpandableListViewTasks expandableListViewTasks;
     List<String> listTasksHeader;
@@ -94,18 +92,17 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
     PendingIntent pendingIntent;
     AlarmManager alarmManager;
     Calendar calendar;
+    Calendar pickerCalendar;
+    long timeNow;
 
     TasksList tasksList;
 
     private DatabaseManager databaseManager;
     private TasksDAO tasksDAO;
     private TasksListDAO tasksListDAO;
-    long timeNow;
 
-    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm aa");
-    private String ACTION_NOTIFICATION = "ACTION_NOTIFICATION";
-    private String CHANNEL_ID = "CHANNEL_ID";
     public static final String KEY = "KEY";
+    public static final String TASKS_ID = "TASKS_ID";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,7 +116,7 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         View view = inflater.inflate(R.layout.fragment_tasks, null);
 
         anhxa(view);
-
+        dateFormatHelper = new DateFormatHelper();
         //list
         tasksListList = new ArrayList<>();
         tasksToday = new ArrayList<>();
@@ -135,7 +132,8 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         tasksListDAO = new TasksListDAO(databaseManager);
 
         calendar = Calendar.getInstance();
-        timeNow = calendar.getTimeInMillis();//time hiện tại
+        pickerCalendar=Calendar.getInstance();
+        timeNow = pickerCalendar.getTimeInMillis();//time hiện tại
 
         //ALARMMANAGER
         alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
@@ -143,13 +141,13 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         //toolbar
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         activity.setSupportActionBar(toobarTasks);
+        activity.setTitle("");
 
         setHasOptionsMenu(true);
         toobarTasks.inflateMenu(R.menu.menu_task);
 
         //expandable listview
         addControl();
-
 
 
         //bat su  kien
@@ -159,7 +157,7 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         open_group();
 
         //timer
-        //timer();
+        timer();
 
         //floatingbutton
         flButtonTask.setOnClickListener(new View.OnClickListener() {
@@ -184,24 +182,30 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         listTasksHeader.add(getString(R.string.upcoming));
 
         //TO DAY
+        int mToday = calendar.get(Calendar.MONTH) + 1;
         tasksToday = tasksDAO.getTasksToDayTomorrow(calendar.get(Calendar.DAY_OF_MONTH),
-                calendar.get(Calendar.MONTH) + 1,
+                (calendar.get(Calendar.MONTH) + 1),
                 calendar.get(Calendar.YEAR));
+        Log.d("date", "today " + calendar.get(Calendar.DAY_OF_MONTH) + "/" + mToday + "/" + calendar.get(Calendar.YEAR));
 
         //TOMORROW ( TODAY+1)
-        calendar.add(Calendar.DATE, 1);
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        int mTomorrow = calendar.get(Calendar.MONTH) + 1;
         tasksTomorrow = tasksDAO.getTasksToDayTomorrow(calendar.get(Calendar.DAY_OF_MONTH),
                 calendar.get(Calendar.MONTH) + 1,
                 calendar.get(Calendar.YEAR));
+        Log.d("date", "tomorrow " + calendar.get(Calendar.DAY_OF_MONTH) + "/" + mTomorrow + "/" + calendar.get(Calendar.YEAR));
 
         //UPCOMING //cộng thêm 2 ngày ->lấy những tasks sắp tới(trừ today & tomorrow)
         Calendar upcoming = Calendar.getInstance();
         upcoming.add(Calendar.DAY_OF_MONTH, 2);
-
+        int mUpcoming = upcoming.get(Calendar.MONTH) + 1;
         upcoming.set(Calendar.HOUR_OF_DAY, 0);
         upcoming.set(Calendar.MINUTE, 0);
         upcoming.set(Calendar.SECOND, 0);
         tasksUpcoming = tasksDAO.getTasksUpcoming(upcoming.getTimeInMillis());
+        Log.d("date", "upcoming " + upcoming.get(Calendar.DAY_OF_MONTH) + "/" + mUpcoming + "/" + upcoming.get(Calendar.YEAR));
+
 
         listDataChild.put(listTasksHeader.get(0), tasksToday);
         listDataChild.put(listTasksHeader.get(1), tasksTomorrow);
@@ -281,13 +285,14 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String nameTask = edtIWanTo.getText().toString();//tên nhiệm vụ
-                long timer = calendar.getTimeInMillis();//thời điểm đặt báo thức
+                long timer = pickerCalendar.getTimeInMillis();//thời điểm đặt báo thức
                 // k đc phép đặt thời điểm nhiệm vụ đã kết thúc
                 if (timer <= timeNow) {
                     Toast.makeText(getActivity(), getString(R.string.The_time_you_selected_has_ended), Toast.LENGTH_SHORT).show();
                 } else {
                     Tasks tasks = new Tasks(nameTask, timer, tasksList.getId(), "", "", timeNow, 0);
                     tasksDAO.insertTasks(tasks);
+                    Log.d("date","timer : "+dateFormatHelper.toStringDateTime(timer));
                     addControl();
                     expandableTasks.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
                         @Override
@@ -318,6 +323,7 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         LayoutInflater inflater = getLayoutInflater();
         View view = inflater.inflate(R.layout.dialog_info_tasks, null);
         imgEditTasks = view.findViewById(R.id.imgEditTasks);
+        imgShareTasks = view.findViewById(R.id.imgShareTasks);
         tvNameTasks = view.findViewById(R.id.tvNameTasks);
         tvDayTasks = view.findViewById(R.id.tvDayTasks);
         tvTimeTasks = view.findViewById(R.id.tvTimeTasks);
@@ -327,13 +333,12 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
         builder.setView(view);
 
 
-        SimpleDateFormat day = new SimpleDateFormat("dd-MM-yyyy");
-        SimpleDateFormat time = new SimpleDateFormat("HH:mm aa");
+
         //Sét text
         final Tasks tasks = tasksDAO.getTasksByID(id);
         tvNameTasks.setText(tasks.getNameTask());
-        tvDayTasks.setText(day.format(tasks.getTime()));
-        tvTimeTasks.setText(time.format(tasks.getTime()));
+        tvDayTasks.setText(dateFormatHelper.toStringDay(tasks.getTime()));
+        tvTimeTasks.setText(dateFormatHelper.toStringTime(tasks.getTime()));
 
         //list
         TasksList tl = tasksListDAO.getTasksListByID(tasks.getTaskListId());
@@ -365,7 +370,38 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
             }
         });
 
+        //Send mail
+        imgShareTasks.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMail(tasks);
+            }
+        });
+
         builder.show();
+    }
+
+    private void sendMail(Tasks tasks) {
+        String[] TO = {""};
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+
+        emailIntent.setData(Uri.parse("mailto:"));
+        emailIntent.setType("text/plain");
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, TO);
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "");
+        String content = "" + tasks.getNameTask() + "\n Time: " + dateFormatHelper.toStringDateTime(tasks.getTime());
+
+        if (tasks.getAddress().length() > 0) {
+            content += "\n Address:" + tasks.getAddress();
+        }
+        emailIntent.putExtra(Intent.EXTRA_TEXT, content);
+
+        try {
+            startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+            //getActivity().finish();
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(getActivity(), "There is no email client installed.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void setTextForEdt(TextView tv, String text) {
@@ -382,86 +418,53 @@ public class TasksFragment extends Fragment implements AdapterView.OnItemSelecte
     public void timer() {
         tasksAll = tasksDAO.getAllTasks();
         for (Tasks task : tasksAll) {
-            if (task.getTime() > timeNow) {
+            if (task.getTime() >= timeNow) {
                 Intent intent = new Intent(getActivity(), AlarmReceiver.class);
                 //HẸN GIỜ
-                intent.putExtra(KEY, "On");
+                intent.putExtra(KEY, "on");
+                intent.putExtra(TASKS_ID, task.getNameTask());
                 //vẫn tồn tại khi thoát ứng dụng
                 pendingIntent = PendingIntent.getBroadcast(
                         getActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                notification(pendingIntent);
-                alarmManager.set(AlarmManager.RTC_WAKEUP, task.getTime(), pendingIntent);
+                //KÍCH HOẠT
+                //trên version 19 thì mới có thêm function setExact với độ chính xác cao hơn
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    alarmManager
+                            .setExact(AlarmManager.RTC_WAKEUP, task.getTime(), pendingIntent);
+                } else {
+                    alarmManager
+                            .set(AlarmManager.RTC_WAKEUP, task.getTime(), pendingIntent);
+                }
             }
 
         }
 
     }
 
-    //NOTIFICATION
-    public void notification(PendingIntent pendingIntent) {
-        Intent snoozeIntent = new Intent(getActivity(), AlarmReceiver.class);
-        snoozeIntent.setAction(ACTION_NOTIFICATION);
-        snoozeIntent.putExtra(KEY, "Off");
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getActivity(), CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-                .setContentTitle("My notification")
-                .setContentText("Hello World!")
-                .setContentIntent(pendingIntent)
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(""))
-                .addAction(R.drawable.ic_launcher_background, getString(R.string.start),
-                        pendingIntent);
-        createNotificationChannel();
-        //hiển thị thông báo
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getActivity());
-
-        // hide the notification after its selected
-        mBuilder.build().flags |= Notification.FLAG_AUTO_CANCEL;
-        notificationManager.notify(0, mBuilder.build());
-
-
-    }
-
-    private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = getString(R.string.channel_name);
-            String description = getString(R.string.channel_description);
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = getActivity().getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
 
     //SHOW DATE & TIME DIALOGPICKER
     public void showDatePickerDialog() {
-        final int day = calendar.get(Calendar.DAY_OF_MONTH) - 1;
-        final int month = calendar.get(Calendar.MONTH);
-        final int year = calendar.get(Calendar.YEAR);
+        final int day = pickerCalendar.get(Calendar.DAY_OF_MONTH);
+        final int month = pickerCalendar.get(Calendar.MONTH);
+        final int year = pickerCalendar.get(Calendar.YEAR);
 
         final DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(), new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(final DatePicker datePicker, int i, int i1, int i2) {
 
-                int hour = calendar.get(Calendar.HOUR_OF_DAY) + 1;
-                int minute = calendar.get(Calendar.MINUTE);
+                int hour = pickerCalendar.get(Calendar.HOUR_OF_DAY) + 1;
+                int minute = pickerCalendar.get(Calendar.MINUTE);
 
                 final TimePickerDialog timePickerDialog = new TimePickerDialog(getActivity(), new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                         //set calendar
-                        calendar.set(Calendar.DAY_OF_MONTH, datePicker.getDayOfMonth());
-                        calendar.set(Calendar.MONTH, datePicker.getMonth());
-                        calendar.set(Calendar.YEAR, datePicker.getYear());
-                        calendar.set(Calendar.HOUR_OF_DAY, view.getCurrentHour());
-                        calendar.set(Calendar.MINUTE, view.getCurrentMinute());
-
+                        pickerCalendar.set(Calendar.DAY_OF_MONTH, datePicker.getDayOfMonth());
+                        pickerCalendar.set(Calendar.MONTH, datePicker.getMonth());
+                        pickerCalendar.set(Calendar.YEAR, datePicker.getYear());
+                        pickerCalendar.set(Calendar.HOUR_OF_DAY, view.getCurrentHour());
+                        pickerCalendar.set(Calendar.MINUTE, view.getCurrentMinute());
+                        Toast.makeText(getActivity(), pickerCalendar.get(Calendar.DAY_OF_MONTH)+"/"+pickerCalendar.get(Calendar.MONTH), Toast.LENGTH_SHORT).show();
                     }
                 }, hour, minute, true);
 

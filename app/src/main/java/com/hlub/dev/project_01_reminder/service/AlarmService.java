@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.hlub.dev.project_01_reminder.MainActivity;
 import com.hlub.dev.project_01_reminder.R;
+import com.hlub.dev.project_01_reminder.broadcast_receiver.AlarmReceiver;
 import com.hlub.dev.project_01_reminder.fragment.SettingsFragment;
 import com.hlub.dev.project_01_reminder.fragment.TasksFragment;
 
@@ -29,18 +30,18 @@ public class AlarmService extends Service{
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        String nhanKey=intent.getExtras().getString(TasksFragment.KEY);
-        Log.e("Nhận key ",nhanKey);
+        String nhanKey=intent.getExtras().getString(AlarmReceiver.KEY_RECEIVER);
+        Log.d("Nhận key ",nhanKey);
 
-        if(nhanKey.equals("On")){
+        if(nhanKey.equals("on")){
             id=1;
-        }else if(nhanKey.equals("Off")){
+        }else if(nhanKey.equals("off")){
             id=0;
         }
 
         if(id==1){
-            mediaPlayer = MediaPlayer.create(this, SettingsFragment.fileSong);
-            Log.d("Key music",SettingsFragment.fileSong+"");
+            mediaPlayer = MediaPlayer.create(this, R.raw.alarm_tone);
+           // Log.d("Key music",SettingsFragment.fileSong+"");
             mediaPlayer.start();
             id=0;
             runAsForeground();
@@ -49,7 +50,7 @@ public class AlarmService extends Service{
             mediaPlayer.reset();
         }
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
 
